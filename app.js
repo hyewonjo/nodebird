@@ -6,6 +6,8 @@ const session = require('express-session');
 const nunjucks = require('nunjucks');
 const dotenv = require('dotenv');
 const passport = require('passport');
+const helmet = require('helmet');
+const hpp = require('hpp');
 
 dotenv.config();
 const pageRouter = require('./routes/page');
@@ -14,6 +16,8 @@ const postRouter = require('./routes/post');
 const userRouter = require('./routes/user');
 const {sequelize} = require('./models');
 const passportConfig = require('./passport');
+// todo winston-daily-rotate-file 적용하기
+const logger = require('./logger');
 
 const app = express();
 passportConfig(); // 패스포트 설정
@@ -31,8 +35,14 @@ sequelize.sync({force: false})
         console.error(err);
     });
 
-if (process.env.NODE_ENV === 'production') app.use(morgan('combined'));
-else app.use(morgan('dev'));
+if (process.env.NODE_ENV === 'production') {
+    app.use(morgan('combined'));
+} else {
+    app.use(morgan('dev'));
+}
+
+app.use(helmet());
+app.use(hpp({ contentSecurityPolicy: false }));
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/img', express.static(path.join(__dirname, 'uploads')));
@@ -70,7 +80,8 @@ app.use((req, res, next) => {
 });
 
 app.use((err, req, res, next) => {
-    console.error(err);
+    logger.info('zzzzz');
+    logger.error(err);
     res.locals.message = err.message;
     res.locals.error = process.env.NODE_ENV !== 'production' ? err : {};
     res.status(err.status || 500);
