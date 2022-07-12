@@ -31,13 +31,16 @@ sequelize.sync({force: false})
         console.error(err);
     });
 
-app.use(morgan('dev'));
+if (process.env.NODE_ENV === 'production') app.use(morgan('combined'));
+else app.use(morgan('dev'));
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/img', express.static(path.join(__dirname, 'uploads')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser(process.env.COOKIE_SECRET));
-app.use(session({
+
+const sessionOption = {
     resave: false,
     saveUninitialized: false,
     secret: process.env.COOKIE_SECRET,
@@ -45,7 +48,13 @@ app.use(session({
         httpOnly: true,
         secure: false,
     },
-}));
+};
+if (process.env.NODE_ENV === 'production') {
+    sessionOption.proxy = true; // https 적용을 위해 노드 서버 앞에 다른 서버를 두었을 때
+    sessionOption.cookie.secure = true // https 를 적용할 때
+}
+app.use(session(sessionOption));
+
 app.use(passport.initialize()); // req 객체에 passport 설정을 심는다
 app.use(passport.session()); // req.session 객체에 passport 정보를 저장한다. req.session 객체는 express-session에서 생성하는 것이므로 passport 미들웨어는 express-session 미들웨어보다 뒤에 연결해야 된다.
 
