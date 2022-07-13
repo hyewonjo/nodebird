@@ -42,6 +42,7 @@ router.post('/login', isNotLoggedIn, (req, res, next) => {
                console.error(loginError);
                return next(loginError);
            }
+           console.log('in req.login');
            return res.redirect('/');
        });
    })(req, res, next); // 미들웨어 안에서 미들웨어에 사용자 정의 기능을 추가하고 싶을 때 (req, res, next)를 인수로 준다.

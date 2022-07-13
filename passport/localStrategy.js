@@ -6,7 +6,7 @@ const User = require('../models/user');
 module.exports = () => {
     passport.use(new LocalStrategy({ // 전략에 관한 설정
         usernameField: 'email', // req.body 속성명
-        passworeField: 'password',
+        passwordField: 'password',
     },
         /*
         실제 전략을 수행하는 함수. 첫번째 인수에서 넣어준 email과 password가 인수로 들어간다.

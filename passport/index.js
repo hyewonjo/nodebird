@@ -5,10 +5,12 @@ const User = require('../models/user');
 
 module.exports = () => {
     passport.serializeUser((user, done) => {
+        console.log("in serializeUser");
         done(null, user.id);
     });
 
     passport.deserializeUser((id, done) => { // 매 요청마다 실행됨.
+        console.log("in deserializeUser");
         User.findOne({ // todo 레디스에 캐싱해놓고 조회하도록 수정
             where: {id},
             include: [{

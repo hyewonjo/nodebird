@@ -8,8 +8,28 @@ const dotenv = require('dotenv');
 const passport = require('passport');
 const helmet = require('helmet');
 const hpp = require('hpp');
+const redis = require('redis');
+
+/*
+session 을 인수로 넣어서 호출해야한다.
+connect-redis 는 express-session 에 의존성이 있다.
+ */
+const RedisStore = require('connect-redis')(session);
 
 dotenv.config();
+const redisClient = redis.createClient({
+    url: `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
+    password: process.env.REDIS_PASSWORD,
+});
+
+const connectRedis = async () => {
+    await redisClient.connect();
+};
+connectRedis().then(r => {
+    logger.info(r);
+    logger.info('redis connected');
+});
+
 const pageRouter = require('./routes/page');
 const authRouter = require('./routes/auth');
 const postRouter = require('./routes/post');
@@ -17,6 +37,7 @@ const userRouter = require('./routes/user');
 const {sequelize} = require('./models');
 const passportConfig = require('./passport');
 // todo winston-daily-rotate-file 적용하기
+// todo logger logging 포맷 만들어놓기
 const logger = require('./logger');
 
 const app = express();
@@ -27,6 +48,7 @@ nunjucks.configure('views', {
     express: app,
     watch: true,
 });
+
 sequelize.sync({force: false})
     .then(() => {
         console.log('데이터베이스 연결 성공');
@@ -58,6 +80,8 @@ const sessionOption = {
         httpOnly: true,
         secure: false,
     },
+    // 기본적으로는 메모리에 세션을 저장하지만 이제는 RedisStore에 저장한다. 옵션으로 client 속성에 생성한 redisClient 객체를 연결하면 된다.
+    // store: new RedisStore({client: redisClient}),
 };
 if (process.env.NODE_ENV === 'production') {
     sessionOption.proxy = true; // https 적용을 위해 노드 서버 앞에 다른 서버를 두었을 때
@@ -90,4 +114,4 @@ app.use((err, req, res, next) => {
 
 app.listen(app.get('port'), () => {
     console.log(`${app.get('port')}번 포트에서 대기중`);
-})
+});
